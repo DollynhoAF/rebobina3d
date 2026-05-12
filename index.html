@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rebobina 3D · Atelier Cinematic</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400..700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "secondary-container":"#0053db","on-secondary-fixed":"#00174b","on-secondary-container":"#cdd7ff",
+          "secondary-fixed":"#dbe1ff","surface-variant":"#2d3449","secondary-fixed-dim":"#b4c5ff",
+          "outline-variant":"#4a4455","surface-dim":"#0b1326","tertiary-fixed":"#ffdbcc",
+          "on-error-container":"#ffdad6","inverse-primary":"#732ee4","on-tertiary":"#561f00",
+          "surface-container-low":"#131b2e","surface-container":"#171f33","on-primary-fixed-variant":"#5a00c6",
+          "background":"#0b1326","surface-container-lowest":"#060e20","on-error":"#690005",
+          "on-primary":"#3f008e","on-primary-fixed":"#25005a","tertiary":"#ffb693",
+          "primary":"#d2bbff","on-surface":"#dae2fd","surface-container-highest":"#2d3449",
+          "surface-container-high":"#222a3d","tertiary-fixed-dim":"#ffb693","primary-container":"#7c3aed",
+          "surface":"#0b1326","outline":"#958da1","inverse-on-surface":"#283044",
+          "error-container":"#93000a","primary-fixed":"#eaddff","on-primary-container":"#ede0ff",
+          "secondary":"#b4c5ff","on-surface-variant":"#ccc3d8","inverse-surface":"#dae2fd",
+          "surface-bright":"#31394d","on-tertiary-container":"#ffe0d3","primary-fixed-dim":"#d2bbff",
+          "on-secondary":"#002a78","on-secondary-fixed-variant":"#003ea8","surface-tint":"#d2bbff",
+          "on-background":"#dae2fd","error":"#ffb4ab","on-tertiary-fixed":"#351000",
+          "on-tertiary-fixed-variant":"#7a3000","tertiary-container":"#ae4700"
+        },
+        borderRadius: {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+        spacing: {"margin-mobile":"16px","section-gap":"80px","container-max":"1280px","gutter":"24px","unit":"8px"},
+        fontFamily: {
+          "body-lg":["Exo 2"],"headline-lg-mobile":["Exo 2"],"body-md":["Exo 2"],"display-lg":["Exo 2"],
+          "label-tech":["Space Grotesk"],"headline-md":["Exo 2"],"headline-lg":["Exo 2"],"mono":["JetBrains Mono"],
+          "sans":["Exo 2","ui-sans-serif","system-ui"]
+        },
+        fontSize: {
+          "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+          "headline-lg-mobile":["32px",{"lineHeight":"1.2","fontWeight":"700"}],
+          "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+          "display-lg":["clamp(48px, 7vw, 96px)",{"lineHeight":"1.02","letterSpacing":"-0.045em","fontWeight":"800"}],
+          "label-tech":["12px",{"lineHeight":"1.0","letterSpacing":"0.18em","fontWeight":"500"}],
+          "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"600"}],
+          "headline-lg":["clamp(32px, 4.5vw, 56px)",{"lineHeight":"1.1","letterSpacing":"-0.025em","fontWeight":"700"}]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --primary: #d2bbff;
+    --primary-container: #7c3aed;
+    --bg: #0b1326;
+    --grid-color: rgba(210, 187, 255, 0.06);
+    --cursor-x: 50%;
+    --cursor-y: 50%;
+  }
+  html, body { background: var(--bg); font-family: 'Exo 2', ui-sans-serif, system-ui, sans-serif; }
+  body { overflow-x: hidden; cursor: none; }
+  @media (hover: none) { body { cursor: auto; } #cursor, #cursor-dot { display: none; } }
+
+  /* Custom cursor */
+  #cursor, #cursor-dot {
+    position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%); mix-blend-mode: difference;
+  }
+  #cursor {
+    width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.7); border-radius: 50%;
+    transition: width .25s ease, height .25s ease, background .25s ease, opacity .2s ease;
+  }
+  #cursor.hover { width: 64px; height: 64px; background: rgba(210, 187, 255, .15); border-color: rgba(210,187,255,.8); }
+  #cursor-dot { width: 5px; height: 5px; background: #fff; border-radius: 50%; }
+
+  /* Page loader */
+  #loader {
+    position: fixed; inset: 0; z-index: 10000; background: #060e20;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 24px;
+    transition: opacity .8s ease, visibility .8s ease;
+  }
+  #loader.done { opacity: 0; visibility: hidden; }
+  #loader .bar { width: 240px; height: 1px; background: rgba(255,255,255,.1); overflow: hidden; }
+  #loader .bar::after {
+    content: ''; display: block; height: 100%; background: var(--primary);
+    box-shadow: 0 0 12px var(--primary);
+    animation: loadbar 1.4s cubic-bezier(.7,0,.3,1) forwards;
+  }
+  @keyframes loadbar { 0%{width:0} 60%{width:80%} 100%{width:100%} }
+  #loader .pct {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; font-size: 11px; letter-spacing: .2em;
+    color: var(--primary); text-transform: uppercase;
+  }
+
+  /* Tech grid background */
+  .tech-grid {
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,.9) 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,.9) 0%, transparent 70%);
+  }
+  .scanline::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(transparent 0%, rgba(210,187,255,.04) 50%, transparent 100%);
+    background-size: 100% 6px; animation: scan 8s linear infinite; opacity: .4;
+  }
+  @keyframes scan { 0%{background-position-y:0} 100%{background-position-y:64px} }
+
+  /* Glass card */
+  .glass-card {
+    background: rgba(45, 52, 73, 0.4);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+  }
+  .glass-card::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%);
+  }
+
+  /* Corner brackets */
+  .corner-bracket { position: absolute; width: 12px; height: 12px; border-color: var(--primary); }
+  .bracket-tl { top: 0; left: 0; border-top: 1.5px solid; border-left: 1.5px solid; }
+  .bracket-tr { top: 0; right: 0; border-top: 1.5px solid; border-right: 1.5px solid; }
+  .bracket-bl { bottom: 0; left: 0; border-bottom: 1.5px solid; border-left: 1.5px solid; }
+  .bracket-br { bottom: 0; right: 0; border-bottom: 1.5px solid; border-right: 1.5px solid; }
+
+  /* Conic glow border */
+  .glow-border { position: relative; isolation: isolate; }
+  .glow-border::before {
+    content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+    background: conic-gradient(from var(--angle, 0deg), transparent 0deg, transparent 270deg, var(--primary) 320deg, transparent 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; transition: opacity .4s ease;
+  }
+  .glow-border:hover::before { opacity: 1; animation: spin 3s linear infinite; }
+  @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+  @keyframes spin { to { --angle: 360deg; } }
+
+  /* Category card spotlight */
+  .spotlight-card {
+    position: relative; overflow: hidden; transition: transform .5s cubic-bezier(.2,.8,.2,1), border-color .3s ease;
+  }
+  .spotlight-card::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s ease;
+    background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(210,187,255,.18), transparent 50%);
+  }
+  .spotlight-card:hover::after { opacity: 1; }
+  .spotlight-card:hover { transform: translateY(-4px); border-color: rgba(210,187,255,.35); }
+
+  /* Magnetic button */
+  .magnetic { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .magnetic .label { display: inline-flex; align-items: center; gap: 8px; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+
+  /* Shimmer overlay on primary buttons */
+  .btn-primary {
+    position: relative; overflow: hidden; isolation: isolate;
+    background: linear-gradient(135deg, #7c3aed 0%, #9c5cff 100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 8px 32px -8px rgba(124, 58, 237, .6);
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.25) 50%, transparent 70%);
+    transition: left .8s ease;
+  }
+  .btn-primary:hover::before { left: 100%; }
+  .btn-primary:hover { box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 12px 40px -8px rgba(124, 58, 237, .8), 0 0 40px rgba(124, 58, 237, .3); }
+
+  /* Reveal animations (driven by JS / IntersectionObserver) */
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal-delay-1 { transition-delay: .08s; }
+  .reveal-delay-2 { transition-delay: .16s; }
+  .reveal-delay-3 { transition-delay: .24s; }
+  .reveal-delay-4 { transition-delay: .32s; }
+
+  /* Word stagger (hero headline) */
+  .word { display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .word > span { display: inline-block; transform: translateY(110%); opacity: 0; transition: transform 1s cubic-bezier(.2,.8,.2,1), opacity 1s ease; }
+  .word.in > span { transform: none; opacity: 1; }
+
+  /* Filament SVG animation */
+  .filament-path { stroke-dasharray: 1200; stroke-dashoffset: 1200; }
+  .filament-path.draw { animation: draw 2.5s cubic-bezier(.6,.1,.3,1) .8s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* Marquee */
+  .marquee { display: flex; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+  .marquee-track { display: flex; gap: 32px; flex-shrink: 0; animation: marquee 40s linear infinite; padding-right: 32px; }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  /* Nav shrink */
+  nav.shrunk { padding-top: 8px; padding-bottom: 8px; background: rgba(11, 19, 38, 0.72); backdrop-filter: blur(18px); border-bottom-color: rgba(210, 187, 255, .12); }
+  nav .nav-link { position: relative; }
+  nav .nav-link::after {
+    content: ''; position: absolute; left: 0; bottom: -6px; width: 100%; height: 1px; background: var(--primary);
+    transform: scaleX(0); transform-origin: left; transition: transform .4s cubic-bezier(.7,0,.3,1);
+  }
+  nav .nav-link:hover::after { transform: scaleX(1); }
+
+  /* Horizontal pin */
+  .h-scroll-section { position: relative; }
+  .h-scroll-track { display: flex; gap: 24px; }
+
+  /* Timeline */
+  .timeline-line { position: relative; }
+  .timeline-line::before {
+    content: ''; position: absolute; left: 15px; top: 0; width: 1px; height: 100%;
+    background: linear-gradient(180deg, rgba(210,187,255,.4), rgba(210,187,255,.05));
+  }
+  .timeline-line::after {
+    content: ''; position: absolute; left: 15px; top: 0; width: 1px; height: var(--progress, 0%);
+    background: var(--primary); box-shadow: 0 0 10px var(--primary); transition: height .15s linear;
+  }
+  .timeline-step .step-num {
+    transition: transform .5s cubic-bezier(.2,.8,.2,1), background .5s, color .5s, box-shadow .5s;
+  }
+  .timeline-step.active .step-num {
+    background: var(--primary); color: #25005a; box-shadow: 0 0 24px rgba(210,187,255,.6);
+    transform: scale(1.1);
+  }
+
+  /* Floating orbs */
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; opacity: .55; will-change: transform; }
+  .orb-1 { top: -10%; left: -10%; width: 520px; height: 520px; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); }
+  .orb-2 { bottom: -20%; right: -10%; width: 600px; height: 600px; background: radial-gradient(circle, #4d3aed 0%, transparent 70%); }
+  .orb-3 { top: 40%; left: 50%; width: 320px; height: 320px; background: radial-gradient(circle, #ffb693 0%, transparent 70%); opacity: .25; }
+
+  /* Material Symbols */
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  /* Counter */
+  .counter { font-variant-numeric: tabular-nums; }
+
+  /* Whatsapp pulse */
+  .wa-pulse::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; background: #25D366;
+    animation: wa-pulse 2.5s ease-out infinite; z-index: -1;
+  }
+  @keyframes wa-pulse {
+    0% { transform: scale(1); opacity: .6; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  /* Tilt */
+  .tilt-3d { transform-style: preserve-3d; perspective: 1000px; transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+
+  /* Coupon copy state */
+  .coupon-pill { transition: all .3s ease; cursor: pointer; }
+  .coupon-pill.copied { background: #d2bbff !important; color: #25005a !important; }
+
+  /* Selection */
+  ::selection { background: var(--primary); color: #25005a; }
+
+  /* Hide scrollbar but allow scroll */
+  body::-webkit-scrollbar { width: 8px; }
+  body::-webkit-scrollbar-track { background: #060e20; }
+  body::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 4px; }
+  body::-webkit-scrollbar-thumb:hover { background: #4a4455; }
+
+  /* Viewport HUD corners */
+  .hud-corner { position: fixed; width: 24px; height: 24px; z-index: 50; pointer-events: none; }
+  .hud-corner.tl { top: 16px; left: 16px; border-top: 1px solid rgba(210,187,255,.4); border-left: 1px solid rgba(210,187,255,.4); }
+  .hud-corner.tr { top: 16px; right: 16px; border-top: 1px solid rgba(210,187,255,.4); border-right: 1px solid rgba(210,187,255,.4); }
+  .hud-corner.bl { bottom: 16px; left: 16px; border-bottom: 1px solid rgba(210,187,255,.4); border-left: 1px solid rgba(210,187,255,.4); }
+  .hud-corner.br { bottom: 16px; right: 16px; border-bottom: 1px solid rgba(210,187,255,.4); border-right: 1px solid rgba(210,187,255,.4); }
+
+  /* Category icon — color driven by --cat (RGB triplet) */
+  .cat-icon {
+    background: rgb(var(--cat) / .14);
+    border: 1px solid rgb(var(--cat) / .32);
+    box-shadow: 0 0 18px rgb(var(--cat) / .22);
+  }
+  .cat-icon .material-symbols-outlined { color: rgb(var(--cat)); }
+
+  /* Section label */
+  .section-label { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; font-size: 11px; letter-spacing: .22em; color: rgba(210,187,255,.7); text-transform: uppercase; }
+  .section-label::before { content: ''; display: inline-block; width: 24px; height: 1px; background: currentColor; margin-right: 12px; vertical-align: middle; }
+
+  /* Cursor tracking radial halo on hero */
+  .hero-halo {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(600px circle at var(--cursor-x) var(--cursor-y), rgba(210,187,255,.07), transparent 60%);
+    transition: background .15s linear;
+  }
+
+  /* Cinematic vignette */
+  .vignette {
+    position: fixed; inset: 0; pointer-events: none; z-index: 30;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(6,14,32,.65) 100%);
+    mix-blend-mode: multiply;
+  }
+
+  /* Scroll progress bar */
+  #scroll-progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0; z-index: 60;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    box-shadow: 0 0 10px var(--primary);
+    transition: width .1s linear;
+  }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md">
+
+<!-- Loader -->
+<div id="loader">
+  <img src="assets/logo.svg" alt="Rebobina 3D" class="h-8 md:h-10 w-auto"/>
+  <div class="bar"></div>
+  <p class="pct">CARREGANDO ATELIER · 100%</p>
+</div>
+
+<!-- Custom cursor -->
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+
+<!-- Viewport HUD -->
+<div class="hud-corner tl"></div>
+<div class="hud-corner tr"></div>
+<div class="hud-corner bl"></div>
+<div class="hud-corner br"></div>
+<div class="vignette"></div>
+<div id="scroll-progress"></div>
+
+<!-- Nav -->
+<nav class="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-md border-b border-outline-variant/10 transition-all duration-500">
+  <div class="flex justify-between items-center px-gutter py-4 max-w-container-max mx-auto">
+    <a href="#" class="flex items-center group" aria-label="Rebobina 3D">
+      <img src="assets/logo.svg" alt="Rebobina 3D" class="h-5 md:h-6 w-auto transition-transform duration-500 group-hover:scale-105"/>
+    </a>
+    <div class="hidden md:flex items-center gap-8 font-body-md text-body-md">
+      <a class="nav-link text-on-surface-variant hover:text-on-surface transition-colors" href="#catalogo">Catálogo</a>
+      <a class="nav-link text-on-surface-variant hover:text-on-surface transition-colors" href="#processo">Processo</a>
+      <a class="nav-link text-on-surface-variant hover:text-on-surface transition-colors" href="#sobre">Sobre nós</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="p-2 rounded-lg hover:bg-surface-variant/30 transition-all" aria-label="Conta">
+        <span class="material-symbols-outlined">person</span>
+      </button>
+      <button class="p-2 rounded-lg hover:bg-surface-variant/30 transition-all relative" aria-label="Carrinho">
+        <span class="material-symbols-outlined">shopping_cart</span>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(210,187,255,.8)]"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero" class="relative min-h-screen flex items-center overflow-hidden">
+  <!-- Background video (deepest layer) -->
+  <video class="absolute inset-0 w-full h-full object-cover z-0 opacity-60" autoplay loop muted playsinline preload="metadata" aria-hidden="true">
+    <source src="assets/hero-bg.mp4" type="video/mp4"/>
+  </video>
+  <!-- Purple atmosphere on top of video -->
+  <div class="absolute inset-0 z-[1] bg-background/55"></div>
+  <div class="absolute inset-0 z-[1] tech-grid"></div>
+  <div class="absolute inset-0 z-[1]">
+    <div class="orb orb-1" data-parallax="0.12"></div>
+    <div class="orb orb-2" data-parallax="-0.08"></div>
+    <div class="orb orb-3" data-parallax="0.18"></div>
+  </div>
+  <div class="hero-halo z-[1]"></div>
+
+  <div class="relative z-10 max-w-container-max mx-auto px-gutter w-full pt-32 pb-24">
+    <div class="max-w-4xl">
+      <h1 class="font-display-lg text-display-lg text-on-surface mb-8 leading-[1.02] pt-4">
+        <span class="word"><span>Impressão</span></span>
+        <span class="word"><span>3D</span></span>
+        <span class="word"><span class="text-primary italic font-light">personalizada</span></span><br/>
+        <span class="word"><span>feita</span></span>
+        <span class="word"><span>para</span></span>
+        <span class="word"><span>você.</span></span>
+      </h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-xl reveal reveal-delay-2">
+        Litofanias, organizadores, action figures e objetos religiosos.
+        Cada peça é desenhada, impressa e acabada manualmente no nosso atelier.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 reveal reveal-delay-3">
+        <button class="magnetic btn-primary px-8 py-4 rounded-lg text-on-primary-container font-medium">
+          <span class="label">Ver catálogo <span class="material-symbols-outlined">arrow_forward</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- CATEGORIES -->
+<section id="catalogo" class="py-section-gap relative">
+  <div class="max-w-container-max mx-auto px-gutter">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12 reveal">
+      <div>
+        <h2 class="font-headline-lg text-headline-lg">Navegue por categoria</h2>
+        <p class="font-body-lg text-body-lg text-on-surface-variant mt-2 max-w-xl">Encontre o que você procura entre centenas de modelos únicos.</p>
+      </div>
+      <a href="#" class="inline-flex items-center gap-2 text-primary hover:text-on-surface transition-colors font-medium">
+        Ver tudo <span class="material-symbols-outlined">arrow_outward</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 210 187 255">
+            <span class="material-symbols-outlined text-2xl">smart_toy</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">128 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Action Figures & Geek</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Personagens, miniaturas e colecionáveis em alta resolução.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal reveal-delay-1">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 255 182 147">
+            <span class="material-symbols-outlined text-2xl">photo_frame</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">52 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Litofanias</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Suas fotos em 3D. Presentes únicos que se revelam quando iluminados.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal reveal-delay-2">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 180 197 255">
+            <span class="material-symbols-outlined text-2xl">inventory_2</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">76 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Casa & Organização</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Organizadores, suportes e itens funcionais para o dia a dia.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 255 216 158">
+            <span class="material-symbols-outlined text-2xl">folded_hands</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">41 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Religião</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Peças e símbolos para todas as crenças e espaços sagrados.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal reveal-delay-1">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 255 225 168">
+            <span class="material-symbols-outlined text-2xl">lightbulb</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">37 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Luminárias</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Luminárias decorativas com texturas que filtram luz como vitrais.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal reveal-delay-2">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 168 229 211">
+            <span class="material-symbols-outlined text-2xl">eco</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">64 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Vasos</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Vasos modernos com texturas exclusivas que não se encontram em loja física.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 255 158 199">
+            <span class="material-symbols-outlined text-2xl">videogame_asset</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">93 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Games & Tech</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Suportes, controles e acessórios para seu setup gamer ou home office.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal reveal-delay-1">
+        <div class="flex items-start justify-between">
+          <div class="cat-icon w-12 h-12 rounded-lg flex items-center justify-center" style="--cat: 194 168 245">
+            <span class="material-symbols-outlined text-2xl">key</span>
+          </div>
+          <span class="font-mono text-xs text-on-surface-variant">22 itens</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Chaveiros</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Chaveiros personalizados, resistentes e cheios de personalidade.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Explorar <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+
+      <a href="#" class="spotlight-card glass-card rounded-2xl p-6 flex flex-col gap-4 border border-white/8 reveal reveal-delay-2" style="background:linear-gradient(135deg, rgba(124,58,237,.28), rgba(45,52,73,.4))">
+        <div class="flex items-start justify-between">
+          <div class="w-12 h-12 rounded-lg bg-primary/30 border border-primary/50 flex items-center justify-center shadow-[0_0_22px_rgba(210,187,255,.4)]">
+            <span class="material-symbols-outlined text-primary text-2xl">grid_view</span>
+          </div>
+          <span class="font-mono text-xs text-primary">+500</span>
+        </div>
+        <div>
+          <h3 class="font-headline-md text-xl mb-1">Catálogo completo</h3>
+          <p class="text-on-surface-variant font-body-md text-sm">Mais de 500 modelos prontos para impressão personalizada.</p>
+        </div>
+        <span class="inline-flex items-center gap-1 text-primary text-sm font-medium mt-auto">Ver tudo <span class="material-symbols-outlined text-base">arrow_outward</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- OFFER -->
+<section class="max-w-container-max mx-auto px-gutter mb-section-gap">
+  <div class="relative overflow-hidden rounded-3xl p-8 md:p-14 reveal" style="background: linear-gradient(135deg, #ae4700 0%, #ff6b00 100%);">
+    <div class="absolute -top-1/3 -right-1/4 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl"></div>
+    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+    <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+      <div>
+        <h2 class="font-display-lg text-4xl md:text-5xl text-white mb-4 font-bold leading-tight">
+          10% off na sua<br/>primeira encomenda.
+        </h2>
+        <p class="font-body-lg text-white/90 mb-4">Clique para copiar o cupom:</p>
+        <button id="coupon-btn" class="coupon-pill inline-flex items-center gap-3 bg-white text-tertiary-container px-5 py-3 rounded-lg font-mono font-bold tracking-wider shadow-xl hover:scale-105 transition-transform">
+          <span class="material-symbols-outlined text-base">content_copy</span>
+          <span id="coupon-label">BEMVINDO010</span>
+        </button>
+      </div>
+      <button class="magnetic shrink-0 bg-on-tertiary-container text-tertiary-container px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:shadow-2xl transition-all group">
+        <span class="label">
+          Aproveitar agora
+          <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS TIMELINE -->
+<section id="processo" class="py-section-gap relative overflow-hidden">
+  <div class="absolute inset-0 tech-grid opacity-50"></div>
+  <div class="max-w-container-max mx-auto px-gutter grid grid-cols-1 lg:grid-cols-2 gap-16 items-start relative z-10">
+    <!-- Left: sticky visual -->
+    <div class="lg:sticky lg:top-32">
+      <div class="relative aspect-square glass-card glow-border rounded-2xl overflow-hidden">
+        <div class="corner-bracket bracket-tl" style="width:20px;height:20px"></div>
+        <div class="corner-bracket bracket-tr" style="width:20px;height:20px"></div>
+        <div class="corner-bracket bracket-bl" style="width:20px;height:20px"></div>
+        <div class="corner-bracket bracket-br" style="width:20px;height:20px"></div>
+        <div class="scanline absolute inset-0 z-10"></div>
+        <video id="process-img" class="w-full h-full object-cover opacity-95 transition-opacity duration-700" autoplay loop muted playsinline preload="metadata" aria-label="Impressora 3D em ação">
+          <source src="assets/printer-loop.mp4" type="video/mp4"/>
+        </video>
+      </div>
+    </div>
+
+    <!-- Right: steps -->
+    <div>
+      <h2 class="font-headline-lg text-headline-lg mb-16 reveal">Da modelagem<br/>digital à sua estante.</h2>
+
+      <div class="timeline-line space-y-16 pl-12 relative">
+        <div class="timeline-step active" data-step="0" data-img-src="" data-meta="DESIGN · 0.1 mm precision">
+          <div class="absolute -left-12 step-num w-8 h-8 rounded-full border border-primary text-primary flex items-center justify-center font-bold text-sm">1</div>
+          <h4 class="font-headline-md text-xl text-on-surface mb-2">Design & ajuste</h4>
+          <p class="text-on-surface-variant font-body-md">Cada modelo é cuidadosamente revisado para garantir integridade estrutural e detalhes nítidos. Você aprova antes da impressão.</p>
+        </div>
+
+        <div class="timeline-step" data-step="1" data-meta="PRINT · 215°C / 60°C">
+          <div class="absolute -left-12 step-num w-8 h-8 rounded-full border border-primary text-primary flex items-center justify-center font-bold text-sm">2</div>
+          <h4 class="font-headline-md text-xl text-on-surface mb-2">Impressão premium</h4>
+          <p class="text-on-surface-variant font-body-md">Tecnologias de extrusão e resina selecionadas conforme a peça. Camadas de 0.12mm a 0.2mm para acabamento liso e detalhado.</p>
+        </div>
+
+        <div class="timeline-step" data-step="2" data-meta="FINISH · Manual touch">
+          <div class="absolute -left-12 step-num w-8 h-8 rounded-full border border-primary text-primary flex items-center justify-center font-bold text-sm">3</div>
+          <h4 class="font-headline-md text-xl text-on-surface mb-2">Acabamento manual</h4>
+          <p class="text-on-surface-variant font-body-md">Nossa equipe remove suportes, lixa quando necessário e revisa cada peça antes da entrega.</p>
+        </div>
+
+        <div class="timeline-step" data-step="3" data-meta="SHIP · 48h average">
+          <div class="absolute -left-12 step-num w-8 h-8 rounded-full border border-primary text-primary flex items-center justify-center font-bold text-sm">4</div>
+          <h4 class="font-headline-md text-xl text-on-surface mb-2">Envio rastreado</h4>
+          <p class="text-on-surface-variant font-body-md">Embalagem reforçada e código de rastreio enviado pelo WhatsApp. Em média, 48h da aprovação à postagem.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILARES -->
+<section class="py-section-gap relative">
+  <div class="max-w-container-max mx-auto px-gutter">
+    <div class="text-center max-w-2xl mx-auto mb-12 reveal">
+      <h2 class="font-headline-lg text-headline-lg mb-3">Por que escolher a Rebobina</h2>
+      <p class="font-body-lg text-on-surface-variant">Qualidade laboratorial, entrega rápida e atendimento humano para cada peça que sai do nosso atelier.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card glow-border rounded-2xl p-6 relative reveal">
+        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
+        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
+        <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
+          <span class="material-symbols-outlined text-primary">precision_manufacturing</span>
+        </div>
+        <h4 class="font-headline-md text-body-lg mb-2">Qualidade laboratorial</h4>
+        <p class="font-body-md text-on-surface-variant text-sm">Materiais premium selecionados para cada tipo de peça.</p>
+      </div>
+      <div class="glass-card glow-border rounded-2xl p-6 relative reveal reveal-delay-1">
+        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
+        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
+        <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
+          <span class="material-symbols-outlined text-primary">local_shipping</span>
+        </div>
+        <h4 class="font-headline-md text-body-lg mb-2">Entrega nacional</h4>
+        <p class="font-body-md text-on-surface-variant text-sm">Correios com rastreamento em tempo real, embalagem reforçada.</p>
+      </div>
+      <div class="glass-card glow-border rounded-2xl p-6 relative reveal reveal-delay-2">
+        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
+        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
+        <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
+          <span class="material-symbols-outlined text-primary">tune</span>
+        </div>
+        <h4 class="font-headline-md text-body-lg mb-2">100% personalizável</h4>
+        <p class="font-body-md text-on-surface-variant text-sm">Adaptamos qualquer modelo à sua ideia, cor ou medida.</p>
+      </div>
+      <div class="glass-card glow-border rounded-2xl p-6 relative reveal reveal-delay-3">
+        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
+        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
+        <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
+          <span class="material-symbols-outlined text-primary">shield_lock</span>
+        </div>
+        <h4 class="font-headline-md text-body-lg mb-2">Compra segura</h4>
+        <p class="font-body-md text-on-surface-variant text-sm">Mercado Pago: PIX, cartão ou boleto, com garantia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="sobre" class="bg-surface-container-lowest border-t border-outline-variant/20 relative overflow-hidden">
+  <div class="absolute inset-0 tech-grid opacity-30"></div>
+  <div class="relative grid grid-cols-1 md:grid-cols-12 gap-8 px-gutter py-section-gap max-w-container-max mx-auto">
+    <div class="md:col-span-5">
+      <img src="assets/logo-footer.png" alt="Rebobina 3D" class="w-full max-w-[420px] h-auto mb-6"/>
+      <p class="text-on-surface-variant font-body-md mb-6 leading-relaxed max-w-sm">
+        Impressão 3D personalizada com qualidade laboratorial e prazo garantido.
+        Litofanias, organizadores, action figures e muito mais.
+      </p>
+      <div class="flex items-center gap-3">
+        <a class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-primary hover:text-on-primary hover:border-primary transition-all" href="#">
+          <span class="material-symbols-outlined text-lg">public</span>
+        </a>
+        <a class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-primary hover:text-on-primary hover:border-primary transition-all" href="#">
+          <span class="material-symbols-outlined text-lg">mail</span>
+        </a>
+        <p class="text-on-surface-variant font-mono text-sm ml-2">@rebobina.3d</p>
+      </div>
+    </div>
+    <div class="md:col-span-3 md:col-start-7">
+      <h4 class="font-mono text-xs uppercase tracking-[0.22em] text-primary mb-6">Catálogo</h4>
+      <ul class="space-y-3">
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Litofanias</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Casa & Organização</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Action Figures</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Religião</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Luminárias</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform font-semibold text-primary" href="#">Ver tudo →</a></li>
+      </ul>
+    </div>
+    <div class="md:col-span-3">
+      <h4 class="font-mono text-xs uppercase tracking-[0.22em] text-primary mb-6">Informações</h4>
+      <ul class="space-y-3">
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Sobre nós</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Calculadora 3D</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Minha conta</a></li>
+        <li><a class="text-on-surface-variant hover:text-primary transition-colors hover:translate-x-1 inline-block transform" href="#">Privacidade</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="relative border-t border-outline-variant/10 py-6 text-center text-on-surface-variant font-mono text-xs">
+    <p>© 2026 REBOBINA 3D · TODOS OS DIREITOS RESERVADOS · IMPRESSO COM AMOR</p>
+  </div>
+</footer>
+
+<!-- WhatsApp FAB -->
+<a href="#" class="fixed bottom-8 right-8 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-40 wa-pulse" aria-label="WhatsApp">
+  <svg fill="currentColor" height="28" viewBox="0 0 16 16" width="28" xmlns="http://www.w3.org/2000/svg">
+    <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93a7.898 7.898 0 0 0-2.327-5.594l.004-.005zm-3.32 10.309c-.18.194-.417.402-.832.402-.53 0-1.503-.497-2.097-1.092-.594-.594-1.092-1.567-1.092-2.097 0-.415.208-.652.402-.832.18-.168.358-.235.483-.235.126 0 .25.023.364.12.115.097.355.855.385.918.03.064.047.135.012.222-.03.087-.08.142-.143.208-.06.064-.132.143-.186.195-.062.062-.128.128-.056.252.072.124.318.524.683.89.366.365.766.611.89.683.124.072.19.006.252-.056.052-.054.131-.124.195-.186.066-.063.12-.113.208-.143.087-.035.158-.018.222.012.063.03.921.47 1.018.585.097.114.12.238.12.364 0 .125-.067.303-.235.483z"></path>
+  </svg>
+</a>
+
+<script>
+/* ============================================================
+   REBOBINA 3D — Atelier Cinematic v2
+   ============================================================ */
+
+// ----- Page loader -----
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('done');
+    document.querySelectorAll('.word').forEach((el, i) => {
+      setTimeout(() => el.classList.add('in'), 200 + i * 80);
+    });
+    // Start filament drawing
+    document.querySelector('.filament-path')?.classList.add('draw');
+  }, 1400);
+});
+
+// ----- Lenis smooth scroll -----
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+});
+function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+requestAnimationFrame(raf);
+
+// Connect Lenis with GSAP ScrollTrigger
+gsap.registerPlugin(ScrollTrigger);
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add(time => lenis.raf(time * 1000));
+gsap.ticker.lagSmoothing(0);
+
+// ----- Custom cursor -----
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+let cursorXPos = mouseX, cursorYPos = mouseY;
+
+window.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+  document.documentElement.style.setProperty('--cursor-x', mouseX + 'px');
+  document.documentElement.style.setProperty('--cursor-y', mouseY + 'px');
+});
+
+function animateCursor() {
+  cursorXPos += (mouseX - cursorXPos) * 0.18;
+  cursorYPos += (mouseY - cursorYPos) * 0.18;
+  cursor.style.transform = `translate(${cursorXPos}px, ${cursorYPos}px) translate(-50%, -50%)`;
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.querySelectorAll('a, button, .spotlight-card, .magnetic, input').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+// ----- Magnetic buttons -----
+document.querySelectorAll('.magnetic').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    btn.style.transform = `translate(${x * 0.25}px, ${y * 0.35}px)`;
+    const label = btn.querySelector('.label');
+    if (label) label.style.transform = `translate(${x * 0.12}px, ${y * 0.16}px)`;
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = '';
+    const label = btn.querySelector('.label');
+    if (label) label.style.transform = '';
+  });
+});
+
+// ----- Spotlight cards (mouse follower) -----
+document.querySelectorAll('.spotlight-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+    card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+  });
+});
+
+// ----- Reveal animations on scroll -----
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// ----- Counters -----
+const counterIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseInt(el.dataset.count, 10);
+    const suffix = el.dataset.suffix || '';
+    const duration = 1800;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.floor(target * eased).toLocaleString('pt-BR') + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = target.toLocaleString('pt-BR') + suffix;
+    }
+    requestAnimationFrame(tick);
+    counterIO.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.counter').forEach(el => counterIO.observe(el));
+
+// ----- Nav shrink on scroll -----
+const nav = document.querySelector('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 60) nav.classList.add('shrunk');
+  else nav.classList.remove('shrunk');
+
+  // Scroll progress bar
+  const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = (window.scrollY / totalScroll) * 100;
+  document.getElementById('scroll-progress').style.width = pct + '%';
+});
+
+// ----- Parallax orbs and floating chips (hero) -----
+const parallaxEls = document.querySelectorAll('[data-parallax]');
+const hero = document.getElementById('hero');
+hero.addEventListener('mousemove', e => {
+  const rect = hero.getBoundingClientRect();
+  const cx = (e.clientX - rect.left - rect.width / 2);
+  const cy = (e.clientY - rect.top - rect.height / 2);
+  parallaxEls.forEach(el => {
+    const k = parseFloat(el.dataset.parallax || 0.05);
+    el.style.transform = `translate3d(${cx * k}px, ${cy * k}px, 0)`;
+  });
+});
+
+// Resize: refresh scroll triggers
+window.addEventListener('resize', () => { ScrollTrigger.refresh(); });
+
+// ----- Timeline progress -----
+const timeline = document.querySelector('.timeline-line');
+const steps = document.querySelectorAll('.timeline-step');
+const processStepLabel = document.getElementById('process-step-label');
+const processMeta = document.getElementById('process-meta');
+
+if (timeline) {
+  ScrollTrigger.create({
+    trigger: timeline,
+    start: 'top center',
+    end: 'bottom center',
+    scrub: 0.5,
+    onUpdate: self => {
+      timeline.style.setProperty('--progress', (self.progress * 100) + '%');
+      const idx = Math.min(steps.length - 1, Math.floor(self.progress * steps.length));
+      steps.forEach((s, i) => s.classList.toggle('active', i === idx));
+      if (processStepLabel) processStepLabel.textContent = `PASSO 0${idx + 1} / 04`;
+      const meta = steps[idx]?.dataset.meta;
+      if (meta && processMeta) processMeta.textContent = meta;
+    }
+  });
+}
+
+// ----- Hero parallax on scroll (translate only — opacity is owned by CSS .reveal) -----
+gsap.to('#hero .orb-1, #hero .orb-2, #hero .orb-3', {
+  yPercent: 30,
+  ease: 'none',
+  scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true }
+});
+
+// ----- Coupon copy -----
+const couponBtn = document.getElementById('coupon-btn');
+const couponLabel = document.getElementById('coupon-label');
+couponBtn?.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText('BEMVINDO010');
+    couponBtn.classList.add('copied');
+    couponLabel.textContent = '✓ COPIADO!';
+    setTimeout(() => {
+      couponBtn.classList.remove('copied');
+      couponLabel.textContent = 'BEMVINDO010';
+    }, 2000);
+  } catch (err) {
+    couponLabel.textContent = 'use BEMVINDO010';
+  }
+});
+
+// ----- Section snap-into-view for nav anchors -----
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      lenis.scrollTo(target, { offset: -80 });
+    }
+  });
+});
+
+</script>
+</body>
+</html>
