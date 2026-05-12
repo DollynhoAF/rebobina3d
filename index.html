@@ -125,13 +125,6 @@
     background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%);
   }
 
-  /* Corner brackets */
-  .corner-bracket { position: absolute; width: 12px; height: 12px; border-color: var(--primary); }
-  .bracket-tl { top: 0; left: 0; border-top: 1.5px solid; border-left: 1.5px solid; }
-  .bracket-tr { top: 0; right: 0; border-top: 1.5px solid; border-right: 1.5px solid; }
-  .bracket-bl { bottom: 0; left: 0; border-bottom: 1.5px solid; border-left: 1.5px solid; }
-  .bracket-br { bottom: 0; right: 0; border-bottom: 1.5px solid; border-right: 1.5px solid; }
-
   /* Conic glow border */
   .glow-border { position: relative; isolation: isolate; }
   .glow-border::before {
@@ -268,13 +261,6 @@
   body::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 4px; }
   body::-webkit-scrollbar-thumb:hover { background: #4a4455; }
 
-  /* Viewport HUD corners */
-  .hud-corner { position: fixed; width: 24px; height: 24px; z-index: 50; pointer-events: none; }
-  .hud-corner.tl { top: 16px; left: 16px; border-top: 1px solid rgba(210,187,255,.4); border-left: 1px solid rgba(210,187,255,.4); }
-  .hud-corner.tr { top: 16px; right: 16px; border-top: 1px solid rgba(210,187,255,.4); border-right: 1px solid rgba(210,187,255,.4); }
-  .hud-corner.bl { bottom: 16px; left: 16px; border-bottom: 1px solid rgba(210,187,255,.4); border-left: 1px solid rgba(210,187,255,.4); }
-  .hud-corner.br { bottom: 16px; right: 16px; border-bottom: 1px solid rgba(210,187,255,.4); border-right: 1px solid rgba(210,187,255,.4); }
-
   /* Category icon — color driven by --cat (RGB triplet) */
   .cat-icon {
     background: rgb(var(--cat) / .14);
@@ -314,7 +300,7 @@
 
 <!-- Loader -->
 <div id="loader">
-  <img src="assets/logo.svg" alt="Rebobina 3D" class="h-8 md:h-10 w-auto"/>
+  <img src="assets/ativo-7.svg" alt="Rebobina 3D" class="h-20 md:h-28 w-auto"/>
   <div class="bar"></div>
   <p class="pct">CARREGANDO ATELIER · 100%</p>
 </div>
@@ -323,11 +309,6 @@
 <div id="cursor"></div>
 <div id="cursor-dot"></div>
 
-<!-- Viewport HUD -->
-<div class="hud-corner tl"></div>
-<div class="hud-corner tr"></div>
-<div class="hud-corner bl"></div>
-<div class="hud-corner br"></div>
 <div class="vignette"></div>
 <div id="scroll-progress"></div>
 
@@ -572,10 +553,6 @@
     <!-- Left: sticky visual -->
     <div class="lg:sticky lg:top-32">
       <div class="relative aspect-square glass-card glow-border rounded-2xl overflow-hidden">
-        <div class="corner-bracket bracket-tl" style="width:20px;height:20px"></div>
-        <div class="corner-bracket bracket-tr" style="width:20px;height:20px"></div>
-        <div class="corner-bracket bracket-bl" style="width:20px;height:20px"></div>
-        <div class="corner-bracket bracket-br" style="width:20px;height:20px"></div>
         <div class="scanline absolute inset-0 z-10"></div>
         <video id="process-img" class="w-full h-full object-cover opacity-95 transition-opacity duration-700" autoplay loop muted playsinline preload="metadata" aria-label="Impressora 3D em ação">
           <source src="assets/printer-loop.mp4" type="video/mp4"/>
@@ -625,8 +602,6 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="glass-card glow-border rounded-2xl p-6 relative reveal">
-        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
-        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
         <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
           <span class="material-symbols-outlined text-primary">precision_manufacturing</span>
         </div>
@@ -634,8 +609,6 @@
         <p class="font-body-md text-on-surface-variant text-sm">Materiais premium selecionados para cada tipo de peça.</p>
       </div>
       <div class="glass-card glow-border rounded-2xl p-6 relative reveal reveal-delay-1">
-        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
-        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
         <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
           <span class="material-symbols-outlined text-primary">local_shipping</span>
         </div>
@@ -643,8 +616,6 @@
         <p class="font-body-md text-on-surface-variant text-sm">Correios com rastreamento em tempo real, embalagem reforçada.</p>
       </div>
       <div class="glass-card glow-border rounded-2xl p-6 relative reveal reveal-delay-2">
-        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
-        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
         <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
           <span class="material-symbols-outlined text-primary">tune</span>
         </div>
@@ -652,8 +623,6 @@
         <p class="font-body-md text-on-surface-variant text-sm">Adaptamos qualquer modelo à sua ideia, cor ou medida.</p>
       </div>
       <div class="glass-card glow-border rounded-2xl p-6 relative reveal reveal-delay-3">
-        <div class="corner-bracket bracket-tl"></div><div class="corner-bracket bracket-tr"></div>
-        <div class="corner-bracket bracket-bl"></div><div class="corner-bracket bracket-br"></div>
         <div class="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(210,187,255,.2)]">
           <span class="material-symbols-outlined text-primary">shield_lock</span>
         </div>
@@ -670,7 +639,7 @@
   <div class="relative grid grid-cols-1 md:grid-cols-12 gap-8 px-gutter py-section-gap max-w-container-max mx-auto">
     <div class="md:col-span-4">
       <div class="w-40 h-40 mb-6">
-        <img src="assets/logo-footer.png" alt="Rebobina 3D" class="w-full h-full object-contain"/>
+        <img src="assets/ativo-7.svg" alt="Rebobina 3D" class="w-full h-full object-contain"/>
       </div>
       <p class="text-on-surface-variant font-body-md mb-6 leading-relaxed max-w-sm">
         Impressão 3D personalizada com qualidade laboratorial e prazo garantido.
